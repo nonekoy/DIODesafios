@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏥 Sistema Farmacêutico - Abstergo Industries</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.2em; }
+        
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .nav-tab.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+        .nav-tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+        
+        .content { padding: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        .stat-number { font-size: 2.5em; font-weight: bold; margin-bottom: 5px; }
+        .stat-label { opacity: 0.9; font-size: 14px; }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-danger { background: linear-gradient(45deg, #ff6b6b, #ee5a52); }
+        .btn-success { background: linear-gradient(45deg, #51cf66, #40c057); }
+        .btn-warning { background: linear-gradient(45deg, #ffd93d, #fcc419); }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .data-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-ok { background: #d4edda; color: #155724; }
+        .status-baixo { background: #fff3cd; color: #856404; }
+        .status-esgotado { background: #f8d7da; color: #721c24; }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: #000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Sistema Farmacêutico</h1>
+            <p>Abstergo Pharmaceutical Industries - Redução de Custos com AWS</p>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('produtos')">💊 Produtos</button>
+            <button class="nav-tab" onclick="showTab('estoque')">📦 Estoque</button>
+            <button class="nav-tab" onclick="showTab('vendas')">💰 Vendas</button>
+            <button class="nav-tab" onclick="showTab('relatorios')">📈 Relatórios</button>
+        </div>
+        
+        <div class="content">
+            <!-- DASHBOARD -->
+            <div id="dashboard" class="tab-content active">
+                <h2>📊 Dashboard Executivo</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-produtos">0</div>
+                        <div class="stat-label">Total de Produtos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="valor-estoque">R$ 0,00</div>
+                        <div class="stat-label">Valor do Estoque</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="vendas-hoje">0</div>
+                        <div class="stat-label">Vendas Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="receita-mes">R$ 0,00</div>
+                        <div class="stat-label">Receita do Mês</div>
+                    </div>
+                </div>
+                
+                <div id="alertas-container">
+                    <!-- Alertas serão carregados aqui -->
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="produtos-baixo-estoque">0</div>
+                        <div class="stat-label">Produtos com Estoque Baixo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="produtos-vencendo">0</div>
+                        <div class="stat-label">Produtos Vencendo</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PRODUTOS -->
+            <div id="produtos" class="tab-content">
+                <h2>💊 Gestão de Produtos</h2>
+                
+                <button class="btn" onclick="showModal('produto')">➕ Novo Produto</button>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Preço</th>
+                                <th>Estoque</th>
+                                <th>Validade</th>
+                                <th>Fornecedor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produtos-table">
+                            <!-- Produtos serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- ESTOQUE -->
+            <div id="estoque" class="tab-content">
+                <h2>📦 Controle de Estoque</h2>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Estoque Atual</th>
+                                <th>Status</th>
+                                <th>Validade</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="estoque-table">
+                            <!-- Estoque será carregado aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- VENDAS -->
+            <div id="vendas" class="tab-content">
+                <h2>💰 Nova Venda</h2>
+                
+                <form id="venda-form">
+                    <div class="form-group">
+                        <label for="cliente">Cliente:</label>
+                        <input type="text" id="cliente" placeholder="Nome do cliente" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="forma-pagamento">Forma de Pagamento:</label>
+                        <select id="forma-pagamento" required>
+                            <option value="">Selecione...</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="PIX">PIX</option>
+                        </select>
+                    </div>
+                    
+                    <div id="produtos-venda">
+                        <h3>Produtos da Venda</h3>
+                        <div class="produto-venda">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Produto:</label>
+                                    <select class="produto-select" required>
+                                        <option value="">Selecione um produto...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Quantidade:</label>
+                                    <input type="number" class="quantidade-input" min="1" value="1" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-warning" onclick="adicionarProdutoVenda()">➕ Adicionar Produto</button>
+                    <button type="submit" class="btn">💳 Finalizar Venda</button>
+                </form>
+                
+                <h3>Histórico de Vendas</h3>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Forma de Pagamento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendas-table">
+                            <!-- Vendas serão carregadas aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- RELATÓRIOS -->
+            <div id="relatorios" class="tab-content">
+                <h2>📈 Relatórios</h2>
+                
+                <div class="form-group">
+                    <label for="periodo-relatorio">Período:</label>
+                    <select id="periodo-relatorio" onchange="gerarRelatorio()">
+                        <option value="dia">Hoje</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes" selected>Este Mês</option>
+                        <option value="ano">Este Ano</option>
+                    </select>
+                </div>
+                
+                <div id="relatorio-container">
+                    <!-- Relatório será carregado aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL PRODUTO -->
+    <div id="modal-produto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('produto')">&times;</span>
+            <h2>💊 Novo Produto</h2>
+            
+            <form id="produto-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome-produto">Nome do Produto:</label>
+                        <input type="text" id="nome-produto" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria-produto">Categoria:</label>
+                        <select id="categoria-produto" required>
+                            <option value="">Selecione...</option>
+                            <option value="Analgésico">Analgésico</option>
+                            <option value="Antibiótico">Antibiótico</option>
+                            <option value="Anti-inflamatório">Anti-inflamatório</option>
+                            <option value="Vitaminas">Vitaminas</option>
+                            <option value="Cosméticos">Cosméticos</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="preco-produto">Preço (R$):</label>
+                        <input type="number" id="preco-produto" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estoque-produto">Estoque Inicial:</label>
+                        <input type="number" id="estoque-produto" min="0" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="validade-produto">Data de Validade:</label>
+                        <input type="date" id="validade-produto" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fornecedor-produto">Fornecedor:</label>
+                        <input type="text" id="fornecedor-produto" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="codigo-barras-produto">Código de Barras:</label>
+                    <input type="text" id="codigo-barras-produto" placeholder="7891234567890">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="receita-obrigatoria-produto">
+                        Receita Obrigatória
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn">💾 Salvar Produto</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MODAL ESTOQUE -->
+    <div id="modal-estoque" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('estoque')">&times;</span>
+            <h2>📦 Ajuste de Estoque</h2>
+            
+            <form id="estoque-form">
+                <div class="form-group">
+                    <label for="produto-estoque">Produto:</label>
+                    <input type="text" id="produto-estoque" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="estoque-atual">Estoque Atual:</label>
+                    <input type="number" id="estoque-atual" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="operacao-estoque">Operação:</label>
+                    <select id="operacao-estoque" required>
+                        <option value="adicionar">Adicionar ao Estoque</option>
+                        <option value="remover">Remover do Estoque</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantidade-estoque">Quantidade:</label>
+                    <input type="number" id="quantidade-estoque" min="1" required>
+                </div>
+                
+                <button type="submit" class="btn">✅ Confirmar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sistema principal da farmácia
+        class FarmaciaSystem {
+            constructor() {
+                this.produtos = [];
+                this.vendas = [];
+                this.init();
+            }
+            
+            async init() {
+                await this.loadData();
+                this.setupEventListeners();
+                this.updateDashboard();
+                this.renderAll();
+            }
+            
+            async loadData() {
+                try {
+                    // Carregar produtos
+                    const responseProdutos = await fetch('/api/produtos');
+                    this.produtos = await responseProdutos.json();
+                    
+                    // Carregar vendas
+                    const responseVendas = await fetch('/api/vendas');
+                    this.vendas = await responseVendas.json();
+                    
+                    // Carregar dashboard
+                    await this.loadDashboard();
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                }
+            }
+            
+            async loadDashboard() {
+                try {
+                    const response = await fetch('/api/dashboard');
+                    const dashboard = await response.json();
+                    this.updateDashboardUI(dashboard);
+                } catch (error) {
+                    console.error('Erro ao carregar dashboard:', error);
+                }
+            }
+            
+            updateDashboardUI(dashboard) {
+                document.getElementById('total-produtos').textContent = dashboard.produtos.total;
+                document.getElementById('valor-estoque').textContent = `R$ ${dashboard.produtos.valorEstoque}`;
+                document.getElementById('vendas-hoje').textContent = dashboard.vendas.hoje;
+                document.getElementById('receita-mes').textContent = `R$ ${dashboard.vendas.receitaMes}`;
+                document.getElementById('produtos-baixo-estoque').textContent = dashboard.produtos.baixoEstoque;
+                document.getElementById('produtos-vencendo').textContent = dashboard.produtos.vencendo;
+                
+                // Renderizar alertas
+                this.renderAlertas(dashboard.alertas);
+            }
+            
+            renderAlertas(alertas) {
+                const container = document.getElementById('alertas-container');
+                let html = '';
+                
+                if (alertas.estoqueBaixo.length > 0) {
+                    html += `
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Estoque Baixo:</strong> ${alertas.estoqueBaixo.join(', ')}
+                        </div>
+                    `;
+                }
+                
+                if (alertas.vencendo.length > 0) {
+                    html += `
+                        <div class="alert alert-danger">
+                            <strong>🚨 Vencendo em 7 dias:</strong> ${alertas.vencendo.join(', ')}
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            }
+            
+            renderAll() {
+                this.renderProdutos();
+                this.renderEstoque();
+                this.renderVendas();
+                this.populateProdutoSelects();
+            }
+            
+            renderProdutos() {
+                const tbody = document.getElementById('produtos-table');
+                tbody.innerHTML = this.produtos.map(produto => `
+                    <tr>
+                        <td>${produto.nome}</td>
+                        <td>${produto.categoria}</td>
+                        <td>R$ ${produto.preco.toFixed(2)}</td>
+                        <td>${produto.estoque}</td>
+                        <td>${new Date(produto.validade).toLocaleDateString('pt-BR')}</td>
+                        <td>${produto.fornecedor}</td>
+                        <td>
+                            <button class="btn btn-warning btn-small" onclick="farmaciaSystem.editProduto('${produto.id}')">
+                                ✏️ Editar
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="farmaciaSystem.deleteProduto('${produto.id}')">
+                                🗑️ Remover
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            renderEstoque() {
+                const tbody = document.getElementById('estoque-table');
+                tbody.innerHTML = this.produtos.map(produto => {
+                    let status = 'OK';
+                    let statusClass = 'status-ok';
+                    
+                    if (produto.estoque === 0) {
+                        status = 'ESGOTADO';
+                        statusClass = 'status-esgotado';
+                    } else if (produto.estoque <= 10) {
+                        status = 'BAIXO';
+                        statusClass = 'status-baixo';
+                    }
+                    
+                    return `
+                        <tr>
+                            <td>${produto.nome}</td>
+                            <td>${produto.estoque}</td>
+                            <td><span class="status-badge ${statusClass}">${status}</span></td>
+                            <td>${new Date(produto.validade).toLocaleDateString('pt-BR')}</td>
+                            <td>
+                                <button class="btn btn-warning btn-small" onclick="farmaciaSystem.ajustarEstoque('${produto.id}')">
+                                    📦 Ajustar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            renderVendas() {
+                const tbody = document.getElementById('vendas-table');
+                tbody.innerHTML = this.vendas.map(venda => `
+                    <tr>
+                        <td>${new Date(venda.data).toLocaleDateString('pt-BR')}</td>
+                        <td>${venda.cliente}</td>
+                        <td>R$ ${venda.total.toFixed(2)}</td>
+                        <td>${venda.formaPagamento}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            populateProdutoSelects() {
+                const selects = document.querySelectorAll('.produto-select');
+                selects.forEach(select => {
+                    select.innerHTML = '<option value="">Selecione um produto...</option>' +
+                        this.produtos.map(p => `<option value="${p.id}" data-preco="${p.preco}">${p.nome} - R$ ${p.preco.toFixed(2)}</option>`).join('');
+                });
+            }
+            
+            async addProduto(produtoData) {
+                try {
+                    const response = await fetch('/api/produtos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(produtoData)
+                    });
+                    
+                    if (response.ok) {
+                        const novoProduto = await response.json();
+                        this.produtos.push(novoProduto);
+                        this.renderAll();
+                        this.updateDashboard();
+                        closeModal('produto');
+                        document.getElementById('produto-form').reset();
+                    }
+                } catch (error) {
+                    console.error('Erro ao adicionar produto:', error);
+                }
+            }
+            
+            async deleteProduto(id) {
+                if (confirm('Tem certeza que deseja remover este produto?')) {
+                    try {
+                        const response = await fetch(`/api/produtos/${id}`, { method: 'DELETE' });
+                        if (response.ok) {
+                            this.produtos = this.produtos.filter(p => p.id !== id);
+                            this.renderAll();
+                            this.updateDashboard();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao remover produto:', error);
+                    }
+                }
+            }
+            
+            async ajustarEstoque(id) {
+                const produto = this.produtos.find(p => p.id === id);
+                if (produto) {
+                    document.getElementById('produto-estoque').value = produto.nome;
+                    document.getElementById('estoque-atual').value = produto.estoque;
+                    showModal('estoque');
+                }
+            }
+            
+            async confirmarAjusteEstoque() {
+                const produtoId = document.querySelector('#modal-estoque [data-produto-id]')?.dataset.produtoId;
+                const operacao = document.getElementById('operacao-estoque').value;
+                const quantidade = parseInt(document.getElementById('quantidade-estoque').value);
+                
+                if (!produtoId || !quantidade) return;
+                
+                try {
+                    const response = await fetch(`/api/estoque/${produtoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ quantidade, operacao })
+                    });
+                    
+                    if (response.ok) {
+                        await this.loadData();
+                        this.renderAll();
+                        this.updateDashboard();
+                        closeModal('estoque');
+                        document.getElementById('estoque-form').reset();
+                    }
+                } catch (error) {
+                    console.error('Erro ao ajustar estoque:', error);
+                }
+            }
+            
+            async processarVenda(vendaData) {
+                try {
+                    const response = await fetch('/api/vendas', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(vendaData)
+                    });
+                    
+                    if (response.ok) {
+                        const novaVenda = await response.json();
+                        this.vendas.push(novaVenda);
+                        this.renderAll();
+                        this.updateDashboard();
+                        document.getElementById('venda-form').reset();
+                        alert('Venda processada com sucesso!');
+                    }
+                } catch (error) {
+                    console.error('Erro ao processar venda:', error);
+                    alert('Erro ao processar venda: ' + error.message);
+                }
+            }
+            
+            async gerarRelatorio(periodo) {
+                try {
+                    const response = await fetch(`/api/relatorios/vendas?periodo=${periodo}`);
+                    const relatorio = await response.json();
+                    this.renderRelatorio(relatorio);
+                } catch (error) {
+                    console.error('Erro ao gerar relatório:', error);
+                }
+            }
+            
+            renderRelatorio(relatorio) {
+                const container = document.getElementById('relatorio-container');
+                container.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${relatorio.totalVendas}</div>
+                            <div class="stat-label">Total de Vendas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">R$ ${relatorio.receitaTotal}</div>
+                            <div class="stat-label">Receita Total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">R$ ${relatorio.mediaTicket}</div>
+                            <div class="stat-label">Ticket Médio</div>
+                        </div>
+                    </div>
+                    
+                    <h3>Detalhamento das Vendas</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Forma de Pagamento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${relatorio.vendas.map(venda => `
+                                    <tr>
+                                        <td>${new Date(venda.data).toLocaleDateString('pt-BR')}</td>
+                                        <td>${venda.cliente}</td>
+                                        <td>R$ ${venda.total.toFixed(2)}</td>
+                                        <td>${venda.formaPagamento}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            setupEventListeners() {
+                // Formulário de produto
+                document.getElementById('produto-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const produtoData = {
+                        nome: document.getElementById('nome-produto').value,
+                        categoria: document.getElementById('categoria-produto').value,
+                        preco: parseFloat(document.getElementById('preco-produto').value),
+                        estoque: parseInt(document.getElementById('estoque-produto').value),
+                        validade: document.getElementById('validade-produto').value,
+                        fornecedor: document.getElementById('fornecedor-produto').value,
+                        codigoBarras: document.getElementById('codigo-barras-produto').value,
+                        receitaObrigatoria: document.getElementById('receita-obrigatoria-produto').checked
+                    };
+                    this.addProduto(produtoData);
+                });
+                
+                // Formulário de estoque
+                document.getElementById('estoque-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.confirmarAjusteEstoque();
+                });
+                
+                // Formulário de venda
+                document.getElementById('venda-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.processarVendaFromForm();
+                });
+            }
+            
+            processarVendaFromForm() {
+                const cliente = document.getElementById('cliente').value;
+                const formaPagamento = document.getElementById('forma-pagamento').value;
+                
+                const produtosVenda = [];
+                const produtosRows = document.querySelectorAll('.produto-venda');
+                
+                produtosRows.forEach(row => {
+                    const produtoSelect = row.querySelector('.produto-select');
+                    const quantidadeInput = row.querySelector('.quantidade-input');
+                    
+                    if (produtoSelect.value && quantidadeInput.value) {
+                        produtosVenda.push({
+                            produtoId: produtoSelect.value,
+                            quantidade: parseInt(quantidadeInput.value)
+                        });
+                    }
+                });
+                
+                if (produtosVenda.length === 0) {
+                    alert('Adicione pelo menos um produto à venda');
+                    return;
+                }
+                
+                this.processarVenda({
+                    produtos: produtosVenda,
+                    formaPagamento,
+                    cliente
+                });
+            }
+            
+            updateDashboard() {
+                this.loadDashboard();
+            }
+        }
+        
+        // Funções auxiliares
+        function showTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showModal(modalName) {
+            document.getElementById(`modal-${modalName}`).style.display = 'block';
+        }
+        
+        function closeModal(modalName) {
+            document.getElementById(`modal-${modalName}`).style.display = 'none';
+        }
+        
+        function adicionarProdutoVenda() {
+            const container = document.getElementById('produtos-venda');
+            const novoProduto = document.createElement('div');
+            novoProduto.className = 'produto-venda';
+            novoProduto.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Produto:</label>
+                        <select class="produto-select" required>
+                            <option value="">Selecione um produto...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade:</label>
+                        <input type="number" class="quantidade-input" min="1" value="1" required>
+                    </div>
+                </div>
+            `;
+            container.appendChild(novoProduto);
+            farmaciaSystem.populateProdutoSelects();
+        }
+        
+        function gerarRelatorio() {
+            const periodo = document.getElementById('periodo-relatorio').value;
+            farmaciaSystem.gerarRelatorio(periodo);
+        }
+        
+        // Inicializar o sistema
+        const farmaciaSystem = new FarmaciaSystem();
+        
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
