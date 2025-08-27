@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board de Tarefas - Kanban</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .kanban-column {
+            min-height: 500px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .priority-urgent { border-left: 4px solid #dc3545; }
+        .priority-high { border-left: 4px solid #fd7e14; }
+        .priority-medium { border-left: 4px solid #ffc107; }
+        .priority-low { border-left: 4px solid #28a745; }
+        .overdue { background-color: #fff5f5; border: 1px solid #feb2b2; }
+        .column-header {
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .todo-header { background-color: #6c757d; color: white; }
+        .progress-header { background-color: #17a2b8; color: white; }
+        .review-header { background-color: #ffc107; color: black; }
+        .done-header { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-tasks me-2"></i>Board de Tarefas
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/board">
+                    <i class="fas fa-columns me-1"></i>Board
+                </a>
+                <a class="nav-link" href="/tasks/new">
+                    <i class="fas fa-plus me-1"></i>Nova Tarefa
+                </a>
+                <a class="nav-link" href="/">
+                    <i class="fas fa-chart-line me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-5 text-center mb-4">
+                    <i class="fas fa-columns text-primary me-3"></i>Board Kanban
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Coluna: A Fazer -->
+            <div class="col-md-3">
+                <div class="kanban-column">
+                    <div class="column-header todo-header">
+                        <i class="fas fa-clock me-2"></i>A Fazer
+                        <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(todoTasks)}">0</span>
+                    </div>
+                    
+                    <div class="task-card" th:each="task : ${todoTasks}" 
+                         th:classappend="${task.priority == 'URGENT' ? 'priority-urgent' : 
+                                        task.priority == 'HIGH' ? 'priority-high' : 
+                                        task.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low'}"
+                         th:classappend="${task.dueDate != null and task.dueDate < #temporals.createNow()} ? 'overdue' : ''">
+                        
+                        <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                        <p class="card-text text-muted small" th:text="${task.description}">Descrição</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge" 
+                                  th:classappend="${task.priority == 'URGENT' ? 'bg-danger' : 
+                                                 task.priority == 'HIGH' ? 'bg-warning' : 
+                                                 task.priority == 'MEDIUM' ? 'bg-info' : 'bg-success'}"
+                                  th:text="${task.priority.displayName}">
+                                Prioridade
+                            </span>
+                            <small class="text-muted" 
+                                   th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'dd/MM') : ''}">
+                                Data
+                            </small>
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm w-100">
+                            <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="IN_PROGRESS">
+                                <button type="submit" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </form>
+                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(todoTasks)}" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>Nenhuma tarefa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna: Em Andamento -->
+            <div class="col-md-3">
+                <div class="kanban-column">
+                    <div class="column-header progress-header">
+                        <i class="fas fa-spinner me-2"></i>Em Andamento
+                        <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(inProgressTasks)}">0</span>
+                    </div>
+                    
+                    <div class="task-card" th:each="task : ${inProgressTasks}" 
+                         th:classappend="${task.priority == 'URGENT' ? 'priority-urgent' : 
+                                        task.priority == 'HIGH' ? 'priority-high' : 
+                                        task.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low'}"
+                         th:classappend="${task.dueDate != null and task.dueDate < #temporals.createNow()} ? 'overdue' : ''">
+                        
+                        <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                        <p class="card-text text-muted small" th:text="${task.description}">Descrição</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge" 
+                                  th:classappend="${task.priority == 'URGENT' ? 'bg-danger' : 
+                                                 task.priority == 'HIGH' ? 'bg-warning' : 
+                                                 task.priority == 'MEDIUM' ? 'bg-info' : 'bg-success'}"
+                                  th:text="${task.priority.displayName}">
+                                Prioridade
+                            </span>
+                            <small class="text-muted" 
+                                   th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'dd/MM') : ''}">
+                                Data
+                            </small>
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm w-100">
+                            <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="REVIEW">
+                                <button type="submit" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </form>
+                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(inProgressTasks)}" class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-2x mb-2"></i>
+                        <p>Nenhuma tarefa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna: Em Revisão -->
+            <div class="col-md-3">
+                <div class="kanban-column">
+                    <div class="column-header review-header">
+                        <i class="fas fa-eye me-2"></i>Em Revisão
+                        <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(reviewTasks)}">0</span>
+                    </div>
+                    
+                    <div class="task-card" th:each="task : ${reviewTasks}" 
+                         th:classappend="${task.priority == 'URGENT' ? 'priority-urgent' : 
+                                        task.priority == 'HIGH' ? 'priority-high' : 
+                                        task.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low'}"
+                         th:classappend="${task.dueDate != null and task.dueDate < #temporals.createNow()} ? 'overdue' : ''">
+                        
+                        <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                        <p class="card-text text-muted small" th:text="${task.description}">Descrição</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge" 
+                                  th:classappend="${task.priority == 'URGENT' ? 'bg-danger' : 
+                                                 task.priority == 'HIGH' ? 'bg-warning' : 
+                                                 task.priority == 'MEDIUM' ? 'bg-info' : 'bg-success'}"
+                                  th:text="${task.priority.displayName}">
+                                Prioridade
+                            </span>
+                            <small class="text-muted" 
+                                   th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'dd/MM') : ''}">
+                                Data
+                            </small>
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm w-100">
+                            <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="DONE">
+                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(reviewTasks)}" class="text-center text-muted py-4">
+                        <i class="fas fa-eye fa-2x mb-2"></i>
+                        <p>Nenhuma tarefa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna: Concluída -->
+            <div class="col-md-3">
+                <div class="kanban-column">
+                    <div class="column-header done-header">
+                        <i class="fas fa-check-circle me-2"></i>Concluída
+                        <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(doneTasks)}">0</span>
+                    </div>
+                    
+                    <div class="task-card" th:each="task : ${doneTasks}" 
+                         th:classappend="${task.priority == 'URGENT' ? 'priority-urgent' : 
+                                        task.priority == 'HIGH' ? 'priority-high' : 
+                                        task.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low'}">
+                        
+                        <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                        <p class="card-text text-muted small" th:text="${task.description}">Descrição</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge" 
+                                  th:classappend="${task.priority == 'URGENT' ? 'bg-danger' : 
+                                                 task.priority == 'HIGH' ? 'bg-warning' : 
+                                                 task.priority == 'MEDIUM' ? 'bg-info' : 'bg-success'}"
+                                  th:text="${task.priority.displayName}">
+                                Prioridade
+                            </span>
+                            <small class="text-muted" 
+                                   th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'dd/MM') : ''}">
+                                Data
+                            </small>
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm w-100">
+                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Tem certeza que deseja excluir esta tarefa?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(doneTasks)}" class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <p>Nenhuma tarefa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão para adicionar nova tarefa -->
+        <div class="row mt-4">
+            <div class="col text-center">
+                <a href="/tasks/new" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Nova Tarefa
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-light text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-code me-2"></i>Board de Tarefas - Desenvolvido com Spring Boot
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

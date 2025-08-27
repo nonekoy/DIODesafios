@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${task.id != null ? 'Editar Tarefa' : 'Nova Tarefa'}">Formulário de Tarefa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .priority-urgent { color: #dc3545; }
+        .priority-high { color: #fd7e14; }
+        .priority-medium { color: #ffc107; }
+        .priority-low { color: #28a745; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-tasks me-2"></i>Board de Tarefas
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/board">
+                    <i class="fas fa-columns me-1"></i>Board
+                </a>
+                <a class="nav-link" href="/">
+                    <i class="fas fa-chart-line me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="form-container">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        <span th:text="${task.id != null ? 'Editar Tarefa' : 'Nova Tarefa'}">Formulário</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form th:action="${task.id != null ? '/tasks/' + task.id : '/tasks'}" 
+                          th:object="${task}" method="post">
+                        
+                        <!-- Título -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">
+                                <i class="fas fa-heading me-1"></i>Título *
+                            </label>
+                            <input type="text" class="form-control" id="title" 
+                                   th:field="*{title}" placeholder="Digite o título da tarefa" required>
+                            <div class="form-text">Título descritivo da tarefa</div>
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>Descrição
+                            </label>
+                            <textarea class="form-control" id="description" rows="4" 
+                                      th:field="*{description}" 
+                                      placeholder="Descreva os detalhes da tarefa"></textarea>
+                            <div class="form-text">Detalhes adicionais sobre a tarefa</div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-tasks me-1"></i>Status *
+                            </label>
+                            <select class="form-select" id="status" th:field="*{status}" required>
+                                <option value="">Selecione o status</option>
+                                <option th:each="status : ${statuses}" 
+                                        th:value="${status}" 
+                                        th:text="${status.displayName}">
+                                    Status
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Prioridade -->
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">
+                                <i class="fas fa-flag me-1"></i>Prioridade *
+                            </label>
+                            <select class="form-select" id="priority" th:field="*{priority}" required>
+                                <option value="">Selecione a prioridade</option>
+                                <option th:each="priority : ${priorities}" 
+                                        th:value="${priority}" 
+                                        th:text="${priority.displayName}">
+                                    Prioridade
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span class="priority-urgent">Urgente</span> - 
+                                <span class="priority-high">Alta</span> - 
+                                <span class="priority-medium">Média</span> - 
+                                <span class="priority-low">Baixa</span>
+                            </div>
+                        </div>
+
+                        <!-- Data de Vencimento -->
+                        <div class="mb-3">
+                            <label for="dueDate" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Data de Vencimento
+                            </label>
+                            <input type="datetime-local" class="form-control" id="dueDate" 
+                                   th:field="*{dueDate}">
+                            <div class="form-text">Data limite para conclusão da tarefa</div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/board" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                <span th:text="${task.id != null ? 'Atualizar' : 'Salvar'}">Salvar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dicas de Uso -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Dicas de Uso
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Use títulos claros e objetivos
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Descreva detalhes importantes na descrição
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Defina datas de vencimento realistas
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Use a prioridade para organizar o trabalho
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Atualize o status conforme o progresso
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-light text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-code me-2"></i>Board de Tarefas - Desenvolvido com Spring Boot
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
